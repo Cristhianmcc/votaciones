@@ -75,13 +75,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             // Si CAPTCHA es válido (o estamos en localhost), procesar login
             if (isset($this_captcha_valid) && $this_captcha_valid) {
                 // PREPARED STATEMENT para prevenir SQL Injection
-                $stmt = mysqli_prepare($conexion, "SELECT id, usuario, nombres, rol FROM tbl_administrador WHERE usuario = ? AND clave = MD5(?) AND estado = 1 LIMIT 1");
-                mysqli_stmt_bind_param($stmt, "ss", $usuario, $clave);
-                mysqli_stmt_execute($stmt);
-                $resultado = mysqli_stmt_get_result($stmt);
+                // MYSQL (comentado):
+                // $stmt = mysqli_prepare($conexion, "SELECT id, usuario, nombres, rol FROM tbl_administrador WHERE usuario = ? AND clave = MD5(?) AND estado = 1 LIMIT 1");
+                // mysqli_stmt_bind_param($stmt, "ss", $usuario, $clave);
+                // mysqli_stmt_execute($stmt);
+                // $resultado = mysqli_stmt_get_result($stmt);
                 
-                if ($resultado && mysqli_num_rows($resultado) === 1) {
-                    $admin = mysqli_fetch_assoc($resultado);
+                // POSTGRESQL (Supabase):
+                $stmt_name = 'login_admin_' . uniqid();
+                $query = "SELECT id, usuario, nombres, rol FROM tbl_administrador WHERE usuario = $1 AND clave = MD5($2) AND estado = true LIMIT 1";
+                pg_prepare($conexion, $stmt_name, $query);
+                $resultado = pg_execute($conexion, $stmt_name, array($usuario, $clave));
+                
+                // MYSQL: if ($resultado && mysqli_num_rows($resultado) === 1)
+                if ($resultado && pg_num_rows($resultado) === 1) {
+                    $admin = pg_fetch_assoc($resultado);
                     
                     // Login exitoso - resetear intentos
                     $_SESSION['login_intentos'] = 0;
@@ -95,13 +103,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     $_SESSION['admin_login_time'] = time();
                     
                     // Actualizar último acceso con prepared statement
-                    $stmt_update = mysqli_prepare($conexion, "UPDATE tbl_administrador SET ultimo_acceso = NOW() WHERE id = ?");
-                    mysqli_stmt_bind_param($stmt_update, "i", $admin['id']);
-                    mysqli_stmt_execute($stmt_update);
-                    mysqli_stmt_close($stmt_update);
+                    // MYSQL (comentado):
+                    // $stmt_update = mysqli_prepare($conexion, "UPDATE tbl_administrador SET ultimo_acceso = NOW() WHERE id = ?");
+                    // mysqli_stmt_bind_param($stmt_update, "i", $admin['id']);
+                    // mysqli_stmt_execute($stmt_update);
+                    // mysqli_stmt_close($stmt_update);
                     
-                    mysqli_stmt_close($stmt);
-                    mysqli_close($conexion);
+                    // POSTGRESQL (Supabase):
+                    $stmt_update_name = 'update_acceso_' . uniqid();
+                    pg_prepare($conexion, $stmt_update_name, "UPDATE tbl_administrador SET ultimo_acceso = NOW() WHERE id = $1");
+                    pg_execute($conexion, $stmt_update_name, array($admin['id']));
+                    
+                    pg_close($conexion);
                     header("Location: dashboard.php");
                     exit();
                 } else {
@@ -114,12 +127,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         $error = 'Demasiados intentos fallidos. Bloqueado por 5 minutos.';
                     }
                 }
-                
-                mysqli_stmt_close($stmt);
             }
         }
         
-        mysqli_close($conexion);
+        // MYSQL: mysqli_close($conexion);
+        pg_close($conexion);
     }
 }
 ?>

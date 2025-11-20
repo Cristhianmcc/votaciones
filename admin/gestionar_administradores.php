@@ -46,30 +46,43 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $tipo_mensaje = 'danger';
         } else {
             // Verificar que el usuario no exista con PREPARED STATEMENT
-            $stmt_check = mysqli_prepare($conexion, "SELECT id FROM tbl_administrador WHERE usuario = ?");
-            mysqli_stmt_bind_param($stmt_check, "s", $usuario);
-            mysqli_stmt_execute($stmt_check);
-            $result_check = mysqli_stmt_get_result($stmt_check);
+            // MYSQL (comentado):
+            // $stmt_check = mysqli_prepare($conexion, "SELECT id FROM tbl_administrador WHERE usuario = ?");
+            // mysqli_stmt_bind_param($stmt_check, "s", $usuario);
+            // mysqli_stmt_execute($stmt_check);
+            // $result_check = mysqli_stmt_get_result($stmt_check);
+            // if (mysqli_num_rows($result_check) > 0) {
             
-            if (mysqli_num_rows($result_check) > 0) {
+            // POSTGRESQL (Supabase):
+            $stmt_check_name = 'check_user_' . uniqid();
+            pg_prepare($conexion, $stmt_check_name, "SELECT id FROM tbl_administrador WHERE usuario = $1");
+            $result_check = pg_execute($conexion, $stmt_check_name, array($usuario));
+            
+            if (pg_num_rows($result_check) > 0) {
                 $mensaje = 'El usuario ya existe';
                 $tipo_mensaje = 'warning';
             } else {
                 // Crear admin con PREPARED STATEMENT
-                $clave_md5 = md5($clave);
-                $stmt_insert = mysqli_prepare($conexion, "INSERT INTO tbl_administrador (usuario, clave, nombres, email, rol) VALUES (?, ?, ?, ?, ?)");
-                mysqli_stmt_bind_param($stmt_insert, "sssss", $usuario, $clave_md5, $nombres, $email, $rol);
+                // MYSQL (comentado):
+                // $clave_md5 = md5($clave);
+                // $stmt_insert = mysqli_prepare($conexion, "INSERT INTO tbl_administrador (usuario, clave, nombres, email, rol) VALUES (?, ?, ?, ?, ?)");
+                // mysqli_stmt_bind_param($stmt_insert, "sssss", $usuario, $clave_md5, $nombres, $email, $rol);
+                // if (mysqli_stmt_execute($stmt_insert)) {
                 
-                if (mysqli_stmt_execute($stmt_insert)) {
+                // POSTGRESQL (Supabase):
+                $clave_md5 = md5($clave);
+                $stmt_insert_name = 'insert_admin_' . uniqid();
+                pg_prepare($conexion, $stmt_insert_name, "INSERT INTO tbl_administrador (usuario, clave, nombres, email, rol) VALUES ($1, $2, $3, $4, $5)");
+                $result_insert = pg_execute($conexion, $stmt_insert_name, array($usuario, $clave_md5, $nombres, $email, $rol));
+                
+                if ($result_insert) {
                     $mensaje = 'Administrador creado exitosamente';
                     $tipo_mensaje = 'success';
                 } else {
                     $mensaje = 'Error al crear el administrador';
                     $tipo_mensaje = 'danger';
                 }
-                mysqli_stmt_close($stmt_insert);
             }
-            mysqli_stmt_close($stmt_check);
         }
     }
     
@@ -87,13 +100,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $tipo_mensaje = 'warning';
         } elseif ($admin_id > 0) {
             // PREPARED STATEMENT
-            $stmt = mysqli_prepare($conexion, "UPDATE tbl_administrador SET estado = ? WHERE id = ?");
-            mysqli_stmt_bind_param($stmt, "ii", $nuevo_estado, $admin_id);
-            if (mysqli_stmt_execute($stmt)) {
+            // MYSQL (comentado):
+            // $stmt = mysqli_prepare($conexion, "UPDATE tbl_administrador SET estado = ? WHERE id = ?");
+            // mysqli_stmt_bind_param($stmt, "ii", $nuevo_estado, $admin_id);
+            // if (mysqli_stmt_execute($stmt)) {
+            
+            // POSTGRESQL (Supabase): estado es booleano (true/false)
+            $estado_bool = ($nuevo_estado === 1) ? 'true' : 'false';
+            $stmt_estado_name = 'update_estado_' . uniqid();
+            pg_prepare($conexion, $stmt_estado_name, "UPDATE tbl_administrador SET estado = $1 WHERE id = $2");
+            $result = pg_execute($conexion, $stmt_estado_name, array($estado_bool, $admin_id));
+            if ($result) {
                 $mensaje = 'Estado actualizado correctamente';
                 $tipo_mensaje = 'success';
             }
-            mysqli_stmt_close($stmt);
         }
     }
     
@@ -103,28 +123,41 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $nueva_clave = $_POST['nueva_clave'] ?? '';
         
         if (!empty($nueva_clave) && $admin_id > 0) {
-            $clave_md5 = md5($nueva_clave);
             // PREPARED STATEMENT
-            $stmt = mysqli_prepare($conexion, "UPDATE tbl_administrador SET clave = ? WHERE id = ?");
-            mysqli_stmt_bind_param($stmt, "si", $clave_md5, $admin_id);
-            if (mysqli_stmt_execute($stmt)) {
+            // MYSQL (comentado):
+            // $clave_md5 = md5($nueva_clave);
+            // $stmt = mysqli_prepare($conexion, "UPDATE tbl_administrador SET clave = ? WHERE id = ?");
+            // mysqli_stmt_bind_param($stmt, "si", $clave_md5, $admin_id);
+            // if (mysqli_stmt_execute($stmt)) {
+            
+            // POSTGRESQL (Supabase):
+            $clave_md5 = md5($nueva_clave);
+            $stmt_clave_name = 'update_clave_' . uniqid();
+            pg_prepare($conexion, $stmt_clave_name, "UPDATE tbl_administrador SET clave = $1 WHERE id = $2");
+            $result = pg_execute($conexion, $stmt_clave_name, array($clave_md5, $admin_id));
+            if ($result) {
                 $mensaje = 'Contraseña actualizada correctamente';
                 $tipo_mensaje = 'success';
             }
-            mysqli_stmt_close($stmt);
         }
     }
 }
 
 // Obtener lista de administradores
+// MYSQL (comentado):
+// $query_admins = "SELECT * FROM tbl_administrador ORDER BY id ASC";
+// $resultado_admins = mysqli_query($conexion, $query_admins);
+// while ($admin = mysqli_fetch_assoc($resultado_admins)) {
+
+// POSTGRESQL (Supabase):
 $query_admins = "SELECT * FROM tbl_administrador ORDER BY id ASC";
-$resultado_admins = mysqli_query($conexion, $query_admins);
+$resultado_admins = pg_query($conexion, $query_admins);
 $administradores = [];
-while ($admin = mysqli_fetch_assoc($resultado_admins)) {
+while ($admin = pg_fetch_assoc($resultado_admins)) {
     $administradores[] = $admin;
 }
 
-mysqli_close($conexion);
+pg_close($conexion);
 ?>
 <!DOCTYPE html>
 <html lang="es">
