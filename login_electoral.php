@@ -74,9 +74,9 @@ if ($resultado && pg_num_rows($resultado) === 1) {
     // Establecer sesión del ciudadano
     $_SESSION['ciudadano_id'] = $ciudadano['id'];
     $_SESSION['ciudadano_dni'] = $ciudadano['dni'];
-    $_SESSION['ciudadano_nombre'] = $ciudadano['nombre_completo'];
     $_SESSION['ciudadano_nombres'] = $ciudadano['nombres'];
     $_SESSION['ciudadano_apellidos'] = $ciudadano['apellido_paterno'] . ' ' . $ciudadano['apellido_materno'];
+    $_SESSION['ciudadano_nombre'] = $ciudadano['nombres'] . ' ' . $ciudadano['apellido_paterno'] . ' ' . $ciudadano['apellido_materno'];
     $_SESSION['ciudadano_departamento'] = $ciudadano['departamento'];
     $_SESSION['ciudadano_provincia'] = $ciudadano['provincia'];
     $_SESSION['ciudadano_distrito'] = $ciudadano['distrito'];
