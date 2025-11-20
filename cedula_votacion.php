@@ -20,17 +20,31 @@ if (isset($_SESSION['ha_votado']) && $_SESSION['ha_votado'] == 1) {
 }
 
 // Obtener datos de la cédula (partidos y candidatos)
-$query = "SELECT * FROM sp_obtener_cedula()";
-$resultado = pg_query($conexion, $query);
-$partidos = [];
-
-if ($resultado) {
-    while ($fila = pg_fetch_assoc($resultado)) {
-        $partidos[] = $fila;
+if ($is_production) {
+    // PostgreSQL: Usar función
+    $query = "SELECT * FROM sp_obtener_cedula()";
+    $resultado = pg_query($conexion, $query);
+    $partidos = [];
+    
+    if ($resultado) {
+        while ($fila = pg_fetch_assoc($resultado)) {
+            $partidos[] = $fila;
+        }
     }
+    pg_close($conexion);
+} else {
+    // MySQL: Usar procedimiento almacenado
+    $query = "CALL sp_obtener_cedula()";
+    $resultado = mysqli_query($conexion, $query);
+    $partidos = [];
+    
+    if ($resultado) {
+        while ($fila = mysqli_fetch_assoc($resultado)) {
+            $partidos[] = $fila;
+        }
+    }
+    mysqli_close($conexion);
 }
-
-mysqli_close($conexion);
 ?>
 <!DOCTYPE html>
 <html lang="es">

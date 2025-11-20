@@ -15,28 +15,38 @@ if (!isset($_SESSION['admin_id'])) {
 
 include 'conexion.php';
 
-// Obtener estadísticas generales
-// MYSQL (comentado):
-// $query_stats = "SELECT * FROM v_estadisticas_elecciones";
-// $resultado_stats = mysqli_query($conexion, $query_stats);
-// $stats = mysqli_fetch_assoc($resultado_stats);
-
-// POSTGRESQL (Supabase):
-$query_stats = "SELECT * FROM v_estadisticas_elecciones";
-$resultado_stats = pg_query($conexion, $query_stats);
-$stats = pg_fetch_assoc($resultado_stats);
-
-// Obtener resultados por partido
-// MYSQL: $query_resultados = "SELECT * FROM v_resultados_tiempo_real ORDER BY total_votos DESC";
-$query_resultados = "SELECT * FROM v_resultados_tiempo_real ORDER BY total_votos DESC";
-$resultado_partidos = pg_query($conexion, $query_resultados);
-$partidos = [];
-
-while ($fila = pg_fetch_assoc($resultado_partidos)) {
-    $partidos[] = $fila;
+// Obtener estadísticas generales y resultados
+if ($is_production) {
+    // PostgreSQL
+    $query_stats = "SELECT * FROM v_estadisticas_elecciones";
+    $resultado_stats = pg_query($conexion, $query_stats);
+    $stats = pg_fetch_assoc($resultado_stats);
+    
+    $query_resultados = "SELECT * FROM v_resultados_tiempo_real ORDER BY total_votos DESC";
+    $resultado_partidos = pg_query($conexion, $query_resultados);
+    $partidos = [];
+    
+    while ($fila = pg_fetch_assoc($resultado_partidos)) {
+        $partidos[] = $fila;
+    }
+    
+    pg_close($conexion);
+} else {
+    // MySQL
+    $query_stats = "SELECT * FROM v_estadisticas_elecciones";
+    $resultado_stats = mysqli_query($conexion, $query_stats);
+    $stats = mysqli_fetch_assoc($resultado_stats);
+    
+    $query_resultados = "SELECT * FROM v_resultados_tiempo_real ORDER BY total_votos DESC";
+    $resultado_partidos = mysqli_query($conexion, $query_resultados);
+    $partidos = [];
+    
+    while ($fila = mysqli_fetch_assoc($resultado_partidos)) {
+        $partidos[] = $fila;
+    }
+    
+    mysqli_close($conexion);
 }
-
-pg_close($conexion);
 ?>
 <!DOCTYPE html>
 <html lang="es">
