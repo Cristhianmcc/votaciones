@@ -120,10 +120,10 @@ if (!isset($_SESSION['admin_id'])) {
 
             <!-- Gestión de Votos -->
             <div class="col-md-6 col-lg-4">
-                <a href="#" class="menu-card" onclick="alert('Módulo en desarrollo'); return false;">
+                <a href="gestionar_votos.php" class="menu-card">
                     <div class="text-center">
                         <i class="fas fa-vote-yea menu-icon"></i>
-                        <div class="menu-title">Gestión de Votos</div>
+                        <div class="menu-title">Votos Registrados</div>
                         <div class="menu-description">
                             Administra y verifica los votos registrados
                         </div>
@@ -133,9 +133,9 @@ if (!isset($_SESSION['admin_id'])) {
 
             <!-- Padrón Electoral -->
             <div class="col-md-6 col-lg-4">
-                <a href="#" class="menu-card" onclick="alert('Módulo en desarrollo'); return false;">
+                <a href="gestionar_padron.php" class="menu-card">
                     <div class="text-center">
-                        <i class="fas fa-users menu-icon"></i>
+                        <i class="fas fa-address-book menu-icon"></i>
                         <div class="menu-title">Padrón Electoral</div>
                         <div class="menu-description">
                             Gestiona ciudadanos habilitados para votar
@@ -144,14 +144,27 @@ if (!isset($_SESSION['admin_id'])) {
                 </a>
             </div>
 
-            <!-- Partidos y Candidatos -->
+            <!-- Partidos Políticos -->
             <div class="col-md-6 col-lg-4">
-                <a href="#" class="menu-card" onclick="alert('Módulo en desarrollo'); return false;">
+                <a href="gestionar_partidos.php" class="menu-card">
                     <div class="text-center">
                         <i class="fas fa-flag menu-icon"></i>
                         <div class="menu-title">Partidos Políticos</div>
                         <div class="menu-description">
-                            Administra partidos y candidatos registrados
+                            Administra partidos políticos registrados
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Candidatos -->
+            <div class="col-md-6 col-lg-4">
+                <a href="gestionar_candidatos.php" class="menu-card">
+                    <div class="text-center">
+                        <i class="fas fa-users menu-icon"></i>
+                        <div class="menu-title">Candidatos</div>
+                        <div class="menu-description">
+                            Gestiona candidatos presidenciales y vicepresidentes
                         </div>
                     </div>
                 </a>
