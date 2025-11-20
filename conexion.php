@@ -18,13 +18,13 @@
 // $conexion = mysqli_connect($servidor, $usuario, $clave, $base_datos);
 
 // =====================================================
-// SUPABASE (PostgreSQL) - PRODUCCIÓN (Funcionará en servidor Linux)
+// SUPABASE (PostgreSQL) - PRODUCCIÓN (Usando pooler para mejor conectividad)
 // =====================================================
-$supabase_host = "db.kvjnvvwbxdlporvwdupy.supabase.co";
-$supabase_user = "postgres";
+$supabase_host = "aws-0-us-west-1.pooler.supabase.com";
+$supabase_user = "postgres.kvjnvvwbxdlporvwdupy";
 $supabase_password = "kikomoreno1";
 $supabase_database = "postgres";
-$supabase_port = 5432;
+$supabase_port = 6543;
 $conexion = pg_connect("host=$supabase_host port=$supabase_port dbname=$supabase_database user=$supabase_user password=$supabase_password sslmode=require");
 
 // Verificar conexión
