@@ -4,48 +4,63 @@
  * Archivo de conexión a la base de datos
  */
 
-// Configuración de la base de datos
-// =====================================================
-// DESARROLLO: MySQL local (Windows tiene problemas DNS con Supabase)
-// PRODUCCIÓN: Descomentar Supabase cuando subas a un servidor real
-// =====================================================
-
-// MYSQL (localhost) - DESARROLLO LOCAL
-// $servidor = "localhost";
-// $usuario = "root";
-// $clave = "root";
-// $base_datos = "db_elecciones_2026";
-// $conexion = mysqli_connect($servidor, $usuario, $clave, $base_datos);
-
-// =====================================================
-// SUPABASE (PostgreSQL) - PRODUCCIÓN (Usando pooler para mejor conectividad)
-// =====================================================
-$supabase_host = "aws-0-us-west-1.pooler.supabase.com";
-$supabase_user = "postgres.kvjnvvwbxdlporvwdupy";
-$supabase_password = "kikomoreno1";
-$supabase_database = "postgres";
-$supabase_port = 6543;
-$conexion = pg_connect("host=$supabase_host port=$supabase_port dbname=$supabase_database user=$supabase_user password=$supabase_password sslmode=require");
-
-// Verificar conexión
-if (!$conexion) {
-    // MySQL:
-    // die("Error de conexión: " . mysqli_connect_error());
-    // PostgreSQL:
-    die("Error de conexión a Supabase: " . pg_last_error());
-}
-
-// Configurar zona horaria
 date_default_timezone_set('America/Lima');
 
-// Función para limpiar datos de entrada (MySQL)
+// =====================================================
+// CONFIGURACIÓN AUTOMÁTICA: Local vs Producción
+// =====================================================
+
+// Detectar si estamos en producción (Render) o local (Windows)
+$is_production = isset($_SERVER['RENDER']) || isset($_SERVER['RAILWAY_ENVIRONMENT']) || 
+                 (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'onrender.com') !== false);
+
+if ($is_production) {
+    // =====================================================
+    // PRODUCCIÓN: Railway PostgreSQL
+    // =====================================================
+    $db_host = getenv('PGHOST') ?: 'gondola.proxy.rlwy.net';
+    $db_port = getenv('PGPORT') ?: '16689';
+    $db_user = getenv('PGUSER') ?: 'postgres';
+    $db_password = getenv('PGPASSWORD') ?: 'aGYdhNjZOzgKBaboFadrLUuwMJwhMPft';
+    $db_name = getenv('PGDATABASE') ?: 'railway';
+    
+    $conexion = @pg_connect("host=$db_host port=$db_port dbname=$db_name user=$db_user password=$db_password sslmode=require");
+    
+    if (!$conexion) {
+        die("Error de conexión a Railway PostgreSQL: " . pg_last_error());
+    }
+    
+    pg_set_client_encoding($conexion, "UTF8");
+    
+} else {
+    // =====================================================
+    // DESARROLLO LOCAL: MySQL
+    // =====================================================
+    $servidor = "localhost";
+    $usuario = "root";
+    $clave = "root";
+    $base_datos = "db_elecciones_2026";
+    $conexion = mysqli_connect($servidor, $usuario, $clave, $base_datos);
+    
+    if (!$conexion) {
+        die("Error de conexión: " . mysqli_connect_error());
+    }
+    
+    mysqli_set_charset($conexion, "utf8mb4");
+}
+
+// Función para limpiar datos de entrada
 function limpiar_dato($dato) {
-    global $conexion;
+    global $conexion, $is_production;
     $dato = trim($dato);
     $dato = stripslashes($dato);
     $dato = htmlspecialchars($dato);
-    // MySQL: $dato = mysqli_real_escape_string($conexion, $dato);
-    $dato = pg_escape_string($conexion, $dato); // PostgreSQL
+    
+    if ($is_production) {
+        $dato = pg_escape_string($conexion, $dato); // PostgreSQL
+    } else {
+        $dato = mysqli_real_escape_string($conexion, $dato); // MySQL
+    }
     return $dato;
 }
 
