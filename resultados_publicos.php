@@ -36,7 +36,7 @@ while ($fila = pg_fetch_assoc($resultado_partidos)) {
     $partidos[] = $fila;
 }
 
-mysqli_close($conexion);
+pg_close($conexion);
 ?>
 <!DOCTYPE html>
 <html lang="es">

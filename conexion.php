@@ -11,28 +11,28 @@
 // =====================================================
 
 // MYSQL (localhost) - DESARROLLO LOCAL
-$servidor = "localhost";
-$usuario = "root";
-$clave = "root";
-$base_datos = "db_elecciones_2026";
-$conexion = mysqli_connect($servidor, $usuario, $clave, $base_datos);
+// $servidor = "localhost";
+// $usuario = "root";
+// $clave = "root";
+// $base_datos = "db_elecciones_2026";
+// $conexion = mysqli_connect($servidor, $usuario, $clave, $base_datos);
 
 // =====================================================
 // SUPABASE (PostgreSQL) - PRODUCCIÓN (Funcionará en servidor Linux)
 // =====================================================
-// $supabase_host = "db.kvjnvvwbxdlporvwdupy.supabase.co";
-// $supabase_user = "postgres";
-// $supabase_password = "kikomoreno1";
-// $supabase_database = "postgres";
-// $supabase_port = 5432;
-// $conexion = pg_connect("host=$supabase_host port=$supabase_port dbname=$supabase_database user=$supabase_user password=$supabase_password sslmode=require");
+$supabase_host = "db.kvjnvvwbxdlporvwdupy.supabase.co";
+$supabase_user = "postgres";
+$supabase_password = "kikomoreno1";
+$supabase_database = "postgres";
+$supabase_port = 5432;
+$conexion = pg_connect("host=$supabase_host port=$supabase_port dbname=$supabase_database user=$supabase_user password=$supabase_password sslmode=require");
 
 // Verificar conexión
 if (!$conexion) {
     // MySQL:
-    die("Error de conexión: " . mysqli_connect_error());
+    // die("Error de conexión: " . mysqli_connect_error());
     // PostgreSQL:
-    // die("Error de conexión a Supabase: " . pg_last_error());
+    die("Error de conexión a Supabase: " . pg_last_error());
 }
 
 // Configurar zona horaria
@@ -44,8 +44,8 @@ function limpiar_dato($dato) {
     $dato = trim($dato);
     $dato = stripslashes($dato);
     $dato = htmlspecialchars($dato);
-    $dato = mysqli_real_escape_string($conexion, $dato);
-    // PostgreSQL: $dato = pg_escape_string($conexion, $dato);
+    // MySQL: $dato = mysqli_real_escape_string($conexion, $dato);
+    $dato = pg_escape_string($conexion, $dato); // PostgreSQL
     return $dato;
 }
 

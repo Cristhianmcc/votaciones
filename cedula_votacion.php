@@ -20,12 +20,12 @@ if (isset($_SESSION['ha_votado']) && $_SESSION['ha_votado'] == 1) {
 }
 
 // Obtener datos de la cédula (partidos y candidatos)
-$query = "CALL sp_obtener_cedula()";
-$resultado = mysqli_query($conexion, $query);
+$query = "SELECT * FROM sp_obtener_cedula()";
+$resultado = pg_query($conexion, $query);
 $partidos = [];
 
 if ($resultado) {
-    while ($fila = mysqli_fetch_assoc($resultado)) {
+    while ($fila = pg_fetch_assoc($resultado)) {
         $partidos[] = $fila;
     }
 }

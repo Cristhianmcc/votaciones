@@ -39,11 +39,11 @@ if ($partido_id <= 0) {
 
 try {
     // Registrar el voto usando procedimiento almacenado
-    $query = "CALL sp_registrar_voto('$dni_ciudadano', $partido_id, 'VALIDO', '$ip_address', $tiempo_votacion)";
-    $resultado = mysqli_query($conexion, $query);
+    $query = "SELECT sp_registrar_voto('$dni_ciudadano', $partido_id, 'VALIDO', '$ip_address', $tiempo_votacion)";
+    $resultado = pg_query($conexion, $query);
     
     if ($resultado) {
-        $respuesta = mysqli_fetch_assoc($resultado);
+        $respuesta = pg_fetch_assoc($resultado);
         
         // Actualizar sesión
         $_SESSION['ha_votado'] = 1;
@@ -51,17 +51,17 @@ try {
         $_SESSION['partido_votado'] = $partido_id;
         $_SESSION['fecha_voto'] = date('Y-m-d H:i:s');
         
-        mysqli_close($conexion);
+        pg_close($conexion);
         
         // Redirigir a confirmación
         header("Location: confirmacion_voto.php");
         exit();
     } else {
-        throw new Exception(mysqli_error($conexion));
+        throw new Exception(pg_last_error($conexion));
     }
     
 } catch (Exception $e) {
-    mysqli_close($conexion);
+    pg_close($conexion);
     
     // Verificar tipo de error
     $error_msg = $e->getMessage();

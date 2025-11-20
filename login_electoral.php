@@ -51,22 +51,22 @@ if (empty($dni) || strlen($dni) !== 8 || !ctype_digit($dni)) {
 }
 
 // Buscar ciudadano en el padrón electoral usando procedimiento almacenado
-$query = "CALL sp_validar_ciudadano('$dni')";
-$resultado = mysqli_query($conexion, $query);
+$query = "SELECT * FROM sp_validar_ciudadano('$dni')";
+$resultado = pg_query($conexion, $query);
 
-if ($resultado && mysqli_num_rows($resultado) === 1) {
-    $ciudadano = mysqli_fetch_assoc($resultado);
+if ($resultado && pg_num_rows($resultado) === 1) {
+    $ciudadano = pg_fetch_assoc($resultado);
     
     // Verificar que esté activo
-    if ($ciudadano['estado'] != 1) {
-        mysqli_close($conexion);
+    if ($ciudadano['estado'] != 't') {
+        pg_close($conexion);
         header("Location: index.php?error=inactivo");
         exit();
     }
     
     // Verificar si ya votó
-    if ($ciudadano['ha_votado'] == 1) {
-        mysqli_close($conexion);
+    if ($ciudadano['ha_votado'] == 't') {
+        pg_close($conexion);
         header("Location: index.php?error=ya_voto");
         exit();
     }
@@ -84,14 +84,14 @@ if ($resultado && mysqli_num_rows($resultado) === 1) {
     $_SESSION['login_time'] = time();
     $_SESSION['ip_address'] = obtener_ip_cliente();
     
-    mysqli_close($conexion);
+    pg_close($conexion);
     
     // Redirigir a la cédula de votación
     header("Location: cedula_votacion.php");
     exit();
     
 } else {
-    mysqli_close($conexion);
+    pg_close($conexion);
     header("Location: index.php?error=no_encontrado");
     exit();
 }
