@@ -20,15 +20,41 @@ if ($is_production) {
     // PostgreSQL
     $query_stats = "SELECT * FROM v_estadisticas_elecciones";
     $resultado_stats = pg_query($conexion, $query_stats);
-    $stats = pg_fetch_assoc($resultado_stats);
+    $stats_raw = pg_fetch_assoc($resultado_stats);
+    
+    // Normalizar estadísticas
+    $stats = [
+        'total_ciudadanos' => $stats_raw['total_ciudadanos'] ?? 0,
+        'total_votantes' => $stats_raw['total_votantes'] ?? 0,
+        'votos_validos' => $stats_raw['votos_validos'] ?? 0,
+        'votos_blancos' => $stats_raw['votos_blancos'] ?? 0,
+        'votos_nulos' => $stats_raw['votos_nulos'] ?? 0,
+        'porcentaje_participacion' => $stats_raw['porcentaje_participacion'] ?? 0
+    ];
     
     $query_resultados = "SELECT * FROM v_resultados_tiempo_real ORDER BY total_votos DESC";
     $resultado_partidos = pg_query($conexion, $query_resultados);
     $partidos = [];
     
     while ($fila = pg_fetch_assoc($resultado_partidos)) {
-        $partidos[] = $fila;
+        // Normalizar nombres de campos para PostgreSQL
+        $partidos[] = [
+            'partido_id' => $fila['partido_id'],
+            'siglas' => $fila['siglas'],
+            'nombre_completo' => $fila['nombre_completo'],
+            'nombre_corto' => $fila['siglas'], // Usar siglas como nombre corto
+            'logo_url' => $fila['logo_url'],
+            'color_primario' => $fila['color_primario'],
+            'total_votos' => $fila['total_votos'] ?? 0,
+            'votos' => $fila['total_votos'] ?? 0,
+            'porcentaje' => $fila['porcentaje'] ?? 0,
+            'candidato_presidente' => $fila['candidato_presidente'],
+            'candidato_nombre' => $fila['candidato_presidente']
+        ];
     }
+    
+    // Agregar total_partidos a stats
+    $stats['total_partidos'] = count($partidos);
     
     pg_close($conexion);
 } else {
@@ -44,6 +70,9 @@ if ($is_production) {
     while ($fila = mysqli_fetch_assoc($resultado_partidos)) {
         $partidos[] = $fila;
     }
+    
+    // Agregar total_partidos a stats
+    $stats['total_partidos'] = count($partidos);
     
     mysqli_close($conexion);
 }
