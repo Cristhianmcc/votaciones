@@ -28,7 +28,21 @@ if ($is_production) {
     
     if ($resultado) {
         while ($fila = pg_fetch_assoc($resultado)) {
-            $partidos[] = $fila;
+            // Normalizar nombres de campos para PostgreSQL
+            $partidos[] = [
+                'partido_id' => $fila['partido_id'],
+                'siglas' => $fila['partido_siglas'],
+                'nombre_completo' => $fila['partido_nombre'],
+                'nombre_corto' => $fila['partido_siglas'],
+                'logo_url' => $fila['partido_logo'],
+                'color_primario' => $fila['partido_color'],
+                'presidente_id' => $fila['candidato_presidente_id'],
+                'presidente' => $fila['candidato_presidente_nombres'],
+                'presidente_foto' => $fila['candidato_presidente_foto'],
+                'presidente_profesion' => $fila['candidato_presidente_profesion'],
+                'vp1' => $fila['candidato_vp1_nombres'],
+                'vp2' => $fila['candidato_vp2_nombres']
+            ];
         }
     }
     pg_close($conexion);
