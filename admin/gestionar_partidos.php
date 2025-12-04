@@ -31,11 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             if (in_array($extension, $tipos_permitidos) && $_FILES['logo']['size'] <= 5000000) {
                 $nombre_archivo = strtoupper($siglas) . '.' . $extension;
-                $ruta_destino = "../assets/img/partidos/" . $nombre_archivo;
                 
-                if (move_uploaded_file($_FILES['logo']['tmp_name'], $ruta_destino)) {
-                    $logo_url = "assets/img/partidos/" . $nombre_archivo;
-                }
+                // Usar función que maneja local y Supabase automáticamente
+                $logo_url = subir_archivo($_FILES['logo'], 'partidos', $nombre_archivo);
             }
         }
         
@@ -74,11 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             if (in_array($extension, $tipos_permitidos) && $_FILES['logo']['size'] <= 5000000) {
                 $nombre_archivo = strtoupper($siglas) . '.' . $extension;
-                $ruta_destino = "../assets/img/partidos/" . $nombre_archivo;
                 
-                if (move_uploaded_file($_FILES['logo']['tmp_name'], $ruta_destino)) {
-                    $logo_url = "assets/img/partidos/" . $nombre_archivo;
-                }
+                // Usar función que maneja local y Supabase automáticamente
+                $logo_url = subir_archivo($_FILES['logo'], 'partidos', $nombre_archivo);
             }
         }
         

@@ -34,11 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $nombre_completo = $nombres . ' ' . $apellido_paterno . ' ' . $apellido_materno;
             $extension = pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION);
             $nombre_archivo = $partido_siglas . '-' . strtoupper($nombre_completo) . '.' . $extension;
-            $ruta_destino = '../assets/img/candidatos/' . $nombre_archivo;
             
-            if (move_uploaded_file($_FILES['foto']['tmp_name'], $ruta_destino)) {
-                $foto_url = 'assets/img/candidatos/' . $nombre_archivo;
-            }
+            // Usar función que maneja local y Supabase automáticamente
+            $foto_url = subir_archivo($_FILES['foto'], 'candidatos', $nombre_archivo);
         }
         
         // Si no se subió foto, usar ruta predeterminada
@@ -79,10 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $nombre_completo = $nombres . ' ' . $apellido_paterno . ' ' . $apellido_materno;
             $extension = pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION);
             $nombre_archivo = $partido_siglas . '-' . strtoupper($nombre_completo) . '.' . $extension;
-            $ruta_destino = '../assets/img/candidatos/' . $nombre_archivo;
             
-            if (move_uploaded_file($_FILES['foto']['tmp_name'], $ruta_destino)) {
-                $foto_url = 'assets/img/candidatos/' . $nombre_archivo;
+            // Usar función que maneja local y Supabase automáticamente
+            $foto_url = subir_archivo($_FILES['foto'], 'candidatos', $nombre_archivo);
+            
+            if ($foto_url) {
                 $foto_actualizada = true;
             }
         }

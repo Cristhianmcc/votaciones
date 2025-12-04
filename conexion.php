@@ -32,6 +32,10 @@ if ($is_production) {
     
     pg_set_client_encoding($conexion, "UTF8");
     
+    // Configuración de Supabase Storage
+    define('SUPABASE_URL', 'https://matatan05sproject.supabase.co');
+    define('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hdGF0YW4wNXNwcm9qZWN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMxOTQ4MjEsImV4cCI6MjA0ODc3MDgyMX0.CkWkUbcxYK_cxPPNKZdqDEbkexqJnzumfFMKiUAE_8g');
+    
 } else {
     // =====================================================
     // DESARROLLO LOCAL: MySQL
@@ -74,5 +78,54 @@ function obtener_ip_cliente() {
         $ip = $_SERVER['REMOTE_ADDR'];
     }
     return $ip;
+}
+
+/**
+ * Subir archivo a Supabase Storage o sistema de archivos local
+ * @param array $file Array de $_FILES['nombre_campo']
+ * @param string $bucket Nombre del bucket (candidatos, partidos)
+ * @param string $filename Nombre del archivo
+ * @return string|false URL del archivo o false si falla
+ */
+function subir_archivo($file, $bucket, $filename) {
+    global $is_production;
+    
+    if ($is_production) {
+        // PRODUCCIÓN: Subir a Supabase Storage
+        $file_content = file_get_contents($file['tmp_name']);
+        $mime_type = mime_content_type($file['tmp_name']);
+        
+        $url = SUPABASE_URL . "/storage/v1/object/$bucket/$filename";
+        
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $file_content);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . SUPABASE_KEY,
+            'Content-Type: ' . $mime_type,
+            'apikey: ' . SUPABASE_KEY
+        ]);
+        
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($http_code == 200 || $http_code == 201) {
+            // Retornar URL pública de Supabase
+            return SUPABASE_URL . "/storage/v1/object/public/$bucket/$filename";
+        }
+        
+        return false;
+    } else {
+        // LOCAL: Guardar en sistema de archivos
+        $ruta_local = '../assets/img/' . $bucket . '/' . $filename;
+        
+        if (move_uploaded_file($file['tmp_name'], $ruta_local)) {
+            return 'assets/img/' . $bucket . '/' . $filename;
+        }
+        
+        return false;
+    }
 }
 ?>
