@@ -32,9 +32,10 @@ if ($is_production) {
     
     pg_set_client_encoding($conexion, "UTF8");
     
-    // Configuración de Supabase Storage
-    define('SUPABASE_URL', 'https://matatan05sproject.supabase.co');
-    define('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hdGF0YW4wNXNwcm9qZWN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMxOTQ4MjEsImV4cCI6MjA0ODc3MDgyMX0.CkWkUbcxYK_cxPPNKZdqDEbkexqJnzumfFMKiUAE_8g');
+    // Configuración de Cloudinary para almacenamiento de imágenes
+    define('CLOUDINARY_CLOUD_NAME', 'dwpmualag');
+    define('CLOUDINARY_API_KEY', '285127172321612');
+    define('CLOUDINARY_API_SECRET', 'jN8nbD5hhd6kMEg7uCc1UWLDTpg');
     
 } else {
     // =====================================================
@@ -81,48 +82,71 @@ function obtener_ip_cliente() {
 }
 
 /**
- * Subir archivo a Supabase Storage o sistema de archivos local
+ * Subir archivo a Cloudinary o sistema de archivos local
  * @param array $file Array de $_FILES['nombre_campo']
- * @param string $bucket Nombre del bucket (candidatos, partidos)
+ * @param string $folder Carpeta en Cloudinary (candidatos, partidos)
  * @param string $filename Nombre del archivo
  * @return string|false URL del archivo o false si falla
  */
-function subir_archivo($file, $bucket, $filename) {
+function subir_archivo($file, $folder, $filename) {
     global $is_production;
     
     if ($is_production) {
-        // PRODUCCIÓN: Subir a Supabase Storage
-        $file_content = file_get_contents($file['tmp_name']);
-        $mime_type = mime_content_type($file['tmp_name']);
+        // PRODUCCIÓN: Subir a Cloudinary
+        $file_path = $file['tmp_name'];
         
-        $url = SUPABASE_URL . "/storage/v1/object/$bucket/$filename";
+        // Generar firma para autenticación
+        $timestamp = time();
+        $public_id = $folder . '/' . pathinfo($filename, PATHINFO_FILENAME);
+        
+        $params_to_sign = [
+            'folder' => $folder,
+            'public_id' => $public_id,
+            'timestamp' => $timestamp
+        ];
+        
+        ksort($params_to_sign);
+        $signature_string = '';
+        foreach ($params_to_sign as $key => $value) {
+            $signature_string .= $key . '=' . $value . '&';
+        }
+        $signature_string = rtrim($signature_string, '&');
+        $signature = sha1($signature_string . CLOUDINARY_API_SECRET);
+        
+        // Preparar datos para upload
+        $url = 'https://api.cloudinary.com/v1_1/' . CLOUDINARY_CLOUD_NAME . '/image/upload';
+        
+        $post_fields = [
+            'file' => new CURLFile($file_path, $file['type'], $filename),
+            'folder' => $folder,
+            'public_id' => $public_id,
+            'timestamp' => $timestamp,
+            'api_key' => CLOUDINARY_API_KEY,
+            'signature' => $signature
+        ];
         
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $file_content);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Authorization: Bearer ' . SUPABASE_KEY,
-            'Content-Type: ' . $mime_type,
-            'apikey: ' . SUPABASE_KEY
-        ]);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields);
         
         $response = curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         
-        if ($http_code == 200 || $http_code == 201) {
-            // Retornar URL pública de Supabase
-            return SUPABASE_URL . "/storage/v1/object/public/$bucket/$filename";
+        if ($http_code == 200) {
+            $result = json_decode($response, true);
+            // Retornar URL segura de Cloudinary
+            return $result['secure_url'] ?? false;
         }
         
         return false;
     } else {
         // LOCAL: Guardar en sistema de archivos
-        $ruta_local = '../assets/img/' . $bucket . '/' . $filename;
+        $ruta_local = '../assets/img/' . $folder . '/' . $filename;
         
         if (move_uploaded_file($file['tmp_name'], $ruta_local)) {
-            return 'assets/img/' . $bucket . '/' . $filename;
+            return 'assets/img/' . $folder . '/' . $filename;
         }
         
         return false;
