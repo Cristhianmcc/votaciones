@@ -406,6 +406,10 @@ if ($is_production) {
                                 <select name="cargo" id="edit_cargo" class="form-select" required>
                                     <option value="PRESIDENTE">Presidente</option>
                                     <option value="VICEPRESIDENTE_1">Vicepresidente 1ro</option>
+                                    <option value="VICEPRESIDENTE_2">Vicepresidente 2do</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="mb-3">
                             <label>DNI *</label>
                             <input type="text" name="dni" id="edit_dni" class="form-control" required maxlength="8" pattern="[0-9]{8}">
@@ -414,10 +418,6 @@ if ($is_production) {
                         <div class="mb-3">
                             <label>Fecha de Nacimiento *</label>
                             <input type="date" name="fecha_nacimiento" id="edit_fecha_nacimiento" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label>Nombres *</label>
-                            <input type="text" name="nombres" id="edit_nombres" class="form-control" required>
                         </div>
                         <div class="mb-3">
                             <label>Nombres *</label>
@@ -447,20 +447,19 @@ if ($is_production) {
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary">Actualizar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
         function editarCandidato(candidato) {
             document.getElementById('edit_id').value = candidato.id;
             document.getElementById('edit_partido').value = candidato.partido_id;
             document.getElementById('edit_cargo').value = candidato.tipo_candidato;
             document.getElementById('edit_dni').value = candidato.dni || '';
             document.getElementById('edit_fecha_nacimiento').value = candidato.fecha_nacimiento || '';
-            document.getElementById('edit_nombres').value = candidato.nombres;
-            document.getElementById('edit_paterno').value = candidato.apellido_paterno;
-            document.getElementById('edit_materno').value = candidato.apellido_materno;
-            document.getElementById('edit_profesion').value = candidato.profesion;
-            document.getElementById('edit_id').value = candidato.id;
-            document.getElementById('edit_partido').value = candidato.partido_id;
-            document.getElementById('edit_cargo').value = candidato.tipo_candidato;
-            document.getElementById('edit_dni').value = candidato.dni || '';
             document.getElementById('edit_nombres').value = candidato.nombres;
             document.getElementById('edit_paterno').value = candidato.apellido_paterno;
             document.getElementById('edit_materno').value = candidato.apellido_materno;
@@ -472,9 +471,7 @@ if ($is_production) {
             document.getElementById('edit_partido_siglas').value = selectedOption.getAttribute('data-siglas');
             
             new bootstrap.Modal(document.getElementById('modalEditar')).show();
-        }
-        
-        function setPartidoSiglas(selectElement, targetId) {
+        }        function setPartidoSiglas(selectElement, targetId) {
             const selectedOption = selectElement.options[selectElement.selectedIndex];
             const siglas = selectedOption.getAttribute('data-siglas') || '';
             document.getElementById(targetId).value = siglas;
