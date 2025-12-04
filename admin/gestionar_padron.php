@@ -34,9 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 exit();
             }
             
-            $query = "INSERT INTO tbl_ciudadano (dni, nombres, apellido_paterno, apellido_materno, fecha_nacimiento, departamento, estado) 
-                      VALUES ($1, $2, $3, $4, $5, $6, TRUE)";
-            $result = pg_query_params($conexion, $query, array($dni, $nombres, $apellido_paterno, $apellido_materno, $fecha_nacimiento, $departamento));
+            $query = "INSERT INTO tbl_ciudadano (dni, nombres, apellido_paterno, apellido_materno, fecha_nacimiento, departamento, provincia, distrito, estado) 
+                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)";
+            $result = pg_query_params($conexion, $query, array($dni, $nombres, $apellido_paterno, $apellido_materno, $fecha_nacimiento, $departamento, 'LIMA', 'LIMA'));
         } else {
             // Verificar si ya existe
             $check = mysqli_query($conexion, "SELECT dni FROM tbl_ciudadano WHERE dni = '$dni'");
@@ -46,8 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 exit();
             }
             
-            $query = "INSERT INTO tbl_ciudadano (dni, nombres, apellido_paterno, apellido_materno, fecha_nacimiento, departamento, estado) 
-                      VALUES ('$dni', '$nombres', '$apellido_paterno', '$apellido_materno', '$fecha_nacimiento', '$departamento', 1)";
+            $query = "INSERT INTO tbl_ciudadano (dni, nombres, apellido_paterno, apellido_materno, fecha_nacimiento, departamento, provincia, distrito, estado) 
+                      VALUES ('$dni', '$nombres', '$apellido_paterno', '$apellido_materno', '$fecha_nacimiento', '$departamento', 'LIMA', 'LIMA', 1)";
             $result = mysqli_query($conexion, $query);
         }
         
