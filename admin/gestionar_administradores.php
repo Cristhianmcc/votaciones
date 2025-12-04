@@ -45,37 +45,48 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $mensaje = 'Todos los campos son obligatorios';
             $tipo_mensaje = 'danger';
         } else {
-            // Verificar que el usuario no exista con PREPARED STATEMENT
-            // MYSQL (comentado):
-            // $stmt_check = mysqli_prepare($conexion, "SELECT id FROM tbl_administrador WHERE usuario = ?");
-            // mysqli_stmt_bind_param($stmt_check, "s", $usuario);
-            // mysqli_stmt_execute($stmt_check);
-            // $result_check = mysqli_stmt_get_result($stmt_check);
-            // if (mysqli_num_rows($result_check) > 0) {
+            // Verificar que el usuario no exista con PREPARED STATEMENT - Modo dual
+            $usuario_existe = false;
             
-            // POSTGRESQL (Supabase):
-            $stmt_check_name = 'check_user_' . uniqid();
-            pg_prepare($conexion, $stmt_check_name, "SELECT id FROM tbl_administrador WHERE usuario = $1");
-            $result_check = pg_execute($conexion, $stmt_check_name, array($usuario));
+            if ($is_production) {
+                // POSTGRESQL (Producción):
+                $stmt_check_name = 'check_user_' . uniqid();
+                pg_prepare($conexion, $stmt_check_name, "SELECT id FROM tbl_administrador WHERE usuario = $1");
+                $result_check = pg_execute($conexion, $stmt_check_name, array($usuario));
+                $usuario_existe = (pg_num_rows($result_check) > 0);
+            } else {
+                // MYSQL (Local):
+                $stmt_check = mysqli_prepare($conexion, "SELECT id FROM tbl_administrador WHERE usuario = ?");
+                mysqli_stmt_bind_param($stmt_check, "s", $usuario);
+                mysqli_stmt_execute($stmt_check);
+                $result_check = mysqli_stmt_get_result($stmt_check);
+                $usuario_existe = (mysqli_num_rows($result_check) > 0);
+                mysqli_stmt_close($stmt_check);
+            }
             
-            if (pg_num_rows($result_check) > 0) {
+            if ($usuario_existe) {
                 $mensaje = 'El usuario ya existe';
                 $tipo_mensaje = 'warning';
             } else {
-                // Crear admin con PREPARED STATEMENT
-                // MYSQL (comentado):
-                // $clave_md5 = md5($clave);
-                // $stmt_insert = mysqli_prepare($conexion, "INSERT INTO tbl_administrador (usuario, clave, nombres, email, rol) VALUES (?, ?, ?, ?, ?)");
-                // mysqli_stmt_bind_param($stmt_insert, "sssss", $usuario, $clave_md5, $nombres, $email, $rol);
-                // if (mysqli_stmt_execute($stmt_insert)) {
-                
-                // POSTGRESQL (Supabase):
+                // Crear admin con PREPARED STATEMENT - Modo dual
                 $clave_md5 = md5($clave);
-                $stmt_insert_name = 'insert_admin_' . uniqid();
-                pg_prepare($conexion, $stmt_insert_name, "INSERT INTO tbl_administrador (usuario, clave, nombres, email, rol) VALUES ($1, $2, $3, $4, $5)");
-                $result_insert = pg_execute($conexion, $stmt_insert_name, array($usuario, $clave_md5, $nombres, $email, $rol));
+                $insert_exitoso = false;
                 
-                if ($result_insert) {
+                if ($is_production) {
+                    // POSTGRESQL (Producción):
+                    $stmt_insert_name = 'insert_admin_' . uniqid();
+                    pg_prepare($conexion, $stmt_insert_name, "INSERT INTO tbl_administrador (usuario, clave, nombres, email, rol) VALUES ($1, $2, $3, $4, $5)");
+                    $result_insert = pg_execute($conexion, $stmt_insert_name, array($usuario, $clave_md5, $nombres, $email, $rol));
+                    $insert_exitoso = (bool)$result_insert;
+                } else {
+                    // MYSQL (Local):
+                    $stmt_insert = mysqli_prepare($conexion, "INSERT INTO tbl_administrador (usuario, clave, nombres, email, rol) VALUES (?, ?, ?, ?, ?)");
+                    mysqli_stmt_bind_param($stmt_insert, "sssss", $usuario, $clave_md5, $nombres, $email, $rol);
+                    $insert_exitoso = mysqli_stmt_execute($stmt_insert);
+                    mysqli_stmt_close($stmt_insert);
+                }
+                
+                if ($insert_exitoso) {
                     $mensaje = 'Administrador creado exitosamente';
                     $tipo_mensaje = 'success';
                 } else {
@@ -99,18 +110,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $mensaje = 'No puedes desactivar tu propia cuenta';
             $tipo_mensaje = 'warning';
         } elseif ($admin_id > 0) {
-            // PREPARED STATEMENT
-            // MYSQL (comentado):
-            // $stmt = mysqli_prepare($conexion, "UPDATE tbl_administrador SET estado = ? WHERE id = ?");
-            // mysqli_stmt_bind_param($stmt, "ii", $nuevo_estado, $admin_id);
-            // if (mysqli_stmt_execute($stmt)) {
+            // PREPARED STATEMENT - Modo dual
+            $update_exitoso = false;
             
-            // POSTGRESQL (Supabase): estado es booleano (true/false)
-            $estado_bool = ($nuevo_estado === 1) ? 'true' : 'false';
-            $stmt_estado_name = 'update_estado_' . uniqid();
-            pg_prepare($conexion, $stmt_estado_name, "UPDATE tbl_administrador SET estado = $1 WHERE id = $2");
-            $result = pg_execute($conexion, $stmt_estado_name, array($estado_bool, $admin_id));
-            if ($result) {
+            if ($is_production) {
+                // POSTGRESQL (Producción): estado es booleano (true/false)
+                $estado_bool = ($nuevo_estado === 1) ? 'true' : 'false';
+                $stmt_estado_name = 'update_estado_' . uniqid();
+                pg_prepare($conexion, $stmt_estado_name, "UPDATE tbl_administrador SET estado = $1 WHERE id = $2");
+                $result = pg_execute($conexion, $stmt_estado_name, array($estado_bool, $admin_id));
+                $update_exitoso = (bool)$result;
+            } else {
+                // MYSQL (Local): estado es tinyint (0/1)
+                $stmt = mysqli_prepare($conexion, "UPDATE tbl_administrador SET estado = ? WHERE id = ?");
+                mysqli_stmt_bind_param($stmt, "ii", $nuevo_estado, $admin_id);
+                $update_exitoso = mysqli_stmt_execute($stmt);
+                mysqli_stmt_close($stmt);
+            }
+            
+            if ($update_exitoso) {
                 $mensaje = 'Estado actualizado correctamente';
                 $tipo_mensaje = 'success';
             }
@@ -123,19 +141,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $nueva_clave = $_POST['nueva_clave'] ?? '';
         
         if (!empty($nueva_clave) && $admin_id > 0) {
-            // PREPARED STATEMENT
-            // MYSQL (comentado):
-            // $clave_md5 = md5($nueva_clave);
-            // $stmt = mysqli_prepare($conexion, "UPDATE tbl_administrador SET clave = ? WHERE id = ?");
-            // mysqli_stmt_bind_param($stmt, "si", $clave_md5, $admin_id);
-            // if (mysqli_stmt_execute($stmt)) {
-            
-            // POSTGRESQL (Supabase):
+            // PREPARED STATEMENT - Modo dual
             $clave_md5 = md5($nueva_clave);
-            $stmt_clave_name = 'update_clave_' . uniqid();
-            pg_prepare($conexion, $stmt_clave_name, "UPDATE tbl_administrador SET clave = $1 WHERE id = $2");
-            $result = pg_execute($conexion, $stmt_clave_name, array($clave_md5, $admin_id));
-            if ($result) {
+            $update_exitoso = false;
+            
+            if ($is_production) {
+                // POSTGRESQL (Producción):
+                $stmt_clave_name = 'update_clave_' . uniqid();
+                pg_prepare($conexion, $stmt_clave_name, "UPDATE tbl_administrador SET clave = $1 WHERE id = $2");
+                $result = pg_execute($conexion, $stmt_clave_name, array($clave_md5, $admin_id));
+                $update_exitoso = (bool)$result;
+            } else {
+                // MYSQL (Local):
+                $stmt = mysqli_prepare($conexion, "UPDATE tbl_administrador SET clave = ? WHERE id = ?");
+                mysqli_stmt_bind_param($stmt, "si", $clave_md5, $admin_id);
+                $update_exitoso = mysqli_stmt_execute($stmt);
+                mysqli_stmt_close($stmt);
+            }
+            
+            if ($update_exitoso) {
                 $mensaje = 'Contraseña actualizada correctamente';
                 $tipo_mensaje = 'success';
             }
@@ -143,21 +167,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-// Obtener lista de administradores
-// MYSQL (comentado):
-// $query_admins = "SELECT * FROM tbl_administrador ORDER BY id ASC";
-// $resultado_admins = mysqli_query($conexion, $query_admins);
-// while ($admin = mysqli_fetch_assoc($resultado_admins)) {
-
-// POSTGRESQL (Supabase):
+// Obtener lista de administradores - Modo dual
 $query_admins = "SELECT * FROM tbl_administrador ORDER BY id ASC";
-$resultado_admins = pg_query($conexion, $query_admins);
 $administradores = [];
-while ($admin = pg_fetch_assoc($resultado_admins)) {
-    $administradores[] = $admin;
-}
 
-pg_close($conexion);
+if ($is_production) {
+    // POSTGRESQL (Producción):
+    $resultado_admins = pg_query($conexion, $query_admins);
+    while ($admin = pg_fetch_assoc($resultado_admins)) {
+        $administradores[] = $admin;
+    }
+    pg_close($conexion);
+} else {
+    // MYSQL (Local):
+    $resultado_admins = mysqli_query($conexion, $query_admins);
+    while ($admin = mysqli_fetch_assoc($resultado_admins)) {
+        $administradores[] = $admin;
+    }
+    mysqli_close($conexion);
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">

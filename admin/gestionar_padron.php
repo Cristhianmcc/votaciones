@@ -22,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $nombres = limpiar_dato($_POST['nombres']);
         $apellido_paterno = limpiar_dato($_POST['apellido_paterno']);
         $apellido_materno = limpiar_dato($_POST['apellido_materno']);
+        $fecha_nacimiento = limpiar_dato($_POST['fecha_nacimiento'] ?? '1990-01-01');
         $departamento = limpiar_dato($_POST['departamento']);
         
         if ($is_production) {
@@ -33,9 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 exit();
             }
             
-            $query = "INSERT INTO tbl_ciudadano (dni, nombres, apellido_paterno, apellido_materno, departamento, estado) 
-                      VALUES ($1, $2, $3, $4, $5, TRUE)";
-            $result = pg_query_params($conexion, $query, array($dni, $nombres, $apellido_paterno, $apellido_materno, $departamento));
+            $query = "INSERT INTO tbl_ciudadano (dni, nombres, apellido_paterno, apellido_materno, fecha_nacimiento, departamento, estado) 
+                      VALUES ($1, $2, $3, $4, $5, $6, TRUE)";
+            $result = pg_query_params($conexion, $query, array($dni, $nombres, $apellido_paterno, $apellido_materno, $fecha_nacimiento, $departamento));
         } else {
             // Verificar si ya existe
             $check = mysqli_query($conexion, "SELECT dni FROM tbl_ciudadano WHERE dni = '$dni'");
@@ -45,8 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 exit();
             }
             
-            $query = "INSERT INTO tbl_ciudadano (dni, nombres, apellido_paterno, apellido_materno, departamento, estado) 
-                      VALUES ('$dni', '$nombres', '$apellido_paterno', '$apellido_materno', '$departamento', 1)";
+            $query = "INSERT INTO tbl_ciudadano (dni, nombres, apellido_paterno, apellido_materno, fecha_nacimiento, departamento, estado) 
+                      VALUES ('$dni', '$nombres', '$apellido_paterno', '$apellido_materno', '$fecha_nacimiento', '$departamento', 1)";
             $result = mysqli_query($conexion, $query);
         }
         
@@ -389,6 +390,10 @@ $total_paginas = ceil($total_registros / $por_pagina);
                         <div class="mb-3">
                             <label>Apellido Materno *</label>
                             <input type="text" name="apellido_materno" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Fecha de Nacimiento *</label>
+                            <input type="date" name="fecha_nacimiento" class="form-control" required max="<?php echo date('Y-m-d', strtotime('-18 years')); ?>">
                         </div>
                         <div class="mb-3">
                             <label>Departamento *</label>

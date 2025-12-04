@@ -31,7 +31,7 @@ if ($tipo_voto != '') {
         $params[] = $tipo_voto;
         $param_count++;
     } else {
-        $where_clauses[] = "v.tipo_voto = '$tipo_voto'";
+        $where_clauses[] = "v.voto_tipo = '$tipo_voto'";
     }
 }
 
@@ -49,6 +49,7 @@ $where_sql = count($where_clauses) > 0 ? 'WHERE ' . implode(' AND ', $where_clau
 
 // Obtener votos registrados
 if ($is_production) {
+    // PostgreSQL: tipo_voto, fecha_hora
     $query = "SELECT v.id, v.tipo_voto, v.fecha_hora, 
                      c.dni, c.nombres, c.apellido_paterno, c.apellido_materno, c.departamento,
                      p.siglas as partido_siglas, p.nombre_completo as partido_nombre,
@@ -83,16 +84,17 @@ if ($is_production) {
     $total_registros = $total_row['total'];
     
 } else {
-    $query = "SELECT v.id, v.tipo_voto, v.fecha_hora, 
+    // MySQL: voto_tipo, fecha_voto, tipo_candidato
+    $query = "SELECT v.id, v.voto_tipo as tipo_voto, v.fecha_voto as fecha_hora, 
                      c.dni, c.nombres, c.apellido_paterno, c.apellido_materno, c.departamento,
                      p.siglas as partido_siglas, p.nombre_completo as partido_nombre,
                      cand.nombres as candidato_nombres, cand.apellido_paterno as candidato_paterno
               FROM tbl_voto v
               INNER JOIN tbl_ciudadano c ON v.ciudadano_id = c.id
               LEFT JOIN tbl_partido p ON v.partido_id = p.id
-              LEFT JOIN tbl_candidato cand ON p.id = cand.partido_id AND cand.cargo = 'PRESIDENTE'
+              LEFT JOIN tbl_candidato cand ON p.id = cand.partido_id AND cand.tipo_candidato = 'PRESIDENTE'
               $where_sql
-              ORDER BY v.fecha_hora DESC
+              ORDER BY v.fecha_voto DESC
               LIMIT $por_pagina OFFSET $offset";
     
     $resultado = mysqli_query($conexion, $query);
@@ -122,9 +124,9 @@ if ($is_production) {
     $stats = pg_fetch_assoc($stats_res);
 } else {
     $stats_query = "SELECT 
-                    SUM(CASE WHEN tipo_voto = 'VALIDO' THEN 1 ELSE 0 END) as votos_validos,
-                    SUM(CASE WHEN tipo_voto = 'BLANCO' THEN 1 ELSE 0 END) as votos_blancos,
-                    SUM(CASE WHEN tipo_voto = 'NULO' THEN 1 ELSE 0 END) as votos_nulos,
+                    SUM(CASE WHEN voto_tipo = 'VALIDO' THEN 1 ELSE 0 END) as votos_validos,
+                    SUM(CASE WHEN voto_tipo = 'BLANCO' THEN 1 ELSE 0 END) as votos_blancos,
+                    SUM(CASE WHEN voto_tipo = 'NULO' THEN 1 ELSE 0 END) as votos_nulos,
                     COUNT(*) as total_votos
                     FROM tbl_voto";
     $stats_res = mysqli_query($conexion, $stats_query);

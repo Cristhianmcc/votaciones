@@ -172,7 +172,7 @@ if (!isset($_SESSION['admin_id'])) {
 
             <!-- Reportes -->
             <div class="col-md-6 col-lg-4">
-                <a href="#" class="menu-card" onclick="alert('Módulo en desarrollo'); return false;">
+                <a href="reportes.php" class="menu-card">
                     <div class="text-center">
                         <i class="fas fa-file-alt menu-icon"></i>
                         <div class="menu-title">Reportes</div>

@@ -27,7 +27,7 @@ if ($tipo_voto != '') {
         $params[] = $tipo_voto;
         $param_count++;
     } else {
-        $where_clauses[] = "v.tipo_voto = '$tipo_voto'";
+        $where_clauses[] = "v.voto_tipo = '$tipo_voto'";
     }
 }
 
@@ -67,16 +67,16 @@ if ($is_production) {
         $votos[] = $fila;
     }
 } else {
-    $query = "SELECT v.id, v.tipo_voto, v.fecha_hora, 
+    $query = "SELECT v.id, v.voto_tipo as tipo_voto, v.fecha_voto as fecha_hora, 
                      c.dni, c.nombres, c.apellido_paterno, c.apellido_materno, c.departamento,
                      p.siglas as partido_siglas, p.nombre_completo as partido_nombre,
                      cand.nombres as candidato_nombres, cand.apellido_paterno as candidato_paterno
               FROM tbl_voto v
               INNER JOIN tbl_ciudadano c ON v.ciudadano_id = c.id
               LEFT JOIN tbl_partido p ON v.partido_id = p.id
-              LEFT JOIN tbl_candidato cand ON p.id = cand.partido_id AND cand.cargo = 'PRESIDENTE'
+              LEFT JOIN tbl_candidato cand ON p.id = cand.partido_id AND cand.tipo_candidato = 'PRESIDENTE'
               $where_sql
-              ORDER BY v.fecha_hora DESC";
+              ORDER BY v.fecha_voto DESC";
     
     $resultado = mysqli_query($conexion, $query);
     $votos = [];

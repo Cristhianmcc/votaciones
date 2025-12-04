@@ -26,13 +26,21 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 // Obtener datos del voto
-$partido_id = intval($_POST['partido_id'] ?? 0);
+$tipo_voto = $_POST['tipo_voto'] ?? 'VALIDO';
+
+// Si es voto en blanco, partido_id debe ser NULL desde el inicio
+if ($tipo_voto === 'BLANCO') {
+    $partido_id = null;
+} else {
+    $partido_id = intval($_POST['partido_id'] ?? 0);
+}
+
 $tiempo_votacion = intval($_POST['tiempo_votacion'] ?? 0);
 $dni_ciudadano = $_SESSION['ciudadano_dni'];
 $ip_address = obtener_ip_cliente();
 
-// Validar que se haya seleccionado un partido
-if ($partido_id <= 0) {
+// Validar que se haya seleccionado un partido (solo si NO es voto en blanco)
+if ($tipo_voto !== 'BLANCO' && ($partido_id === null || $partido_id <= 0)) {
     header("Location: cedula_votacion.php?error=no_seleccion");
     exit();
 }
@@ -41,7 +49,8 @@ try {
     // Registrar el voto usando procedimiento almacenado
     if ($is_production) {
         // PostgreSQL: Usar función
-        $query = "SELECT sp_registrar_voto('$dni_ciudadano', $partido_id, 'VALIDO', '$ip_address', $tiempo_votacion)";
+        $partido_param = $partido_id === null ? 'NULL' : $partido_id;
+        $query = "SELECT sp_registrar_voto('$dni_ciudadano', $partido_param, '$tipo_voto', '$ip_address', $tiempo_votacion)";
         $resultado = pg_query($conexion, $query);
         
         if ($resultado) {
@@ -63,7 +72,8 @@ try {
         }
     } else {
         // MySQL: Usar procedimiento almacenado
-        $query = "CALL sp_registrar_voto('$dni_ciudadano', $partido_id, 'VALIDO', '$ip_address', $tiempo_votacion)";
+        $partido_param = $partido_id === null ? 'NULL' : $partido_id;
+        $query = "CALL sp_registrar_voto('$dni_ciudadano', $partido_param, '$tipo_voto', '$ip_address', $tiempo_votacion)";
         $resultado = mysqli_query($conexion, $query);
         
         if ($resultado) {

@@ -345,14 +345,24 @@ if ($is_production) {
 
             <form id="formVotacion" method="POST" action="procesar_voto.php">
                 <input type="hidden" name="partido_id" id="partido_id" value="">
+                <input type="hidden" name="tipo_voto" id="tipo_voto" value="VALIDO">
                 <input type="hidden" name="tiempo_votacion" id="tiempo_votacion" value="0">
 
                 <div class="row">
                     <?php foreach ($partidos as $partido): ?>
                     <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="partido-card" onclick="seleccionarPartido(<?php echo $partido['partido_id']; ?>, '<?php echo htmlspecialchars($partido['siglas']); ?>')">
+                        <div class="partido-card" onclick="seleccionarPartido(<?php echo $partido['partido_id']; ?>, '<?php echo htmlspecialchars($partido['siglas']); ?>', this)">>
                             <div class="text-center">
-                                <img src="<?php echo htmlspecialchars($partido['logo_url']); ?>" 
+                                <?php
+                                    $logo_src = 'assets/img/partidos/placeholder.svg';
+                                    if (!empty($partido['logo_url'])) {
+                                        $candidate_path = __DIR__ . '/' . $partido['logo_url'];
+                                        if (file_exists($candidate_path)) {
+                                            $logo_src = $partido['logo_url'];
+                                        }
+                                    }
+                                ?>
+                                <img src="<?php echo htmlspecialchars($logo_src); ?>" 
                                      alt="<?php echo htmlspecialchars($partido['nombre_corto']); ?>" 
                                      class="partido-logo"
                                      onerror="this.onerror=null; this.src='assets/img/partidos/placeholder.svg';">
@@ -367,8 +377,17 @@ if ($is_production) {
                                 <hr>
 
                                 <div class="candidato-info mt-3">
-                                    <?php if (!empty($partido['presidente_foto'])): ?>
-                                    <img src="<?php echo htmlspecialchars($partido['presidente_foto']); ?>" 
+                                    <?php
+                                        $pres_src = '';
+                                        if (!empty($partido['presidente_foto'])) {
+                                            $pres_path = __DIR__ . '/' . $partido['presidente_foto'];
+                                            if (file_exists($pres_path)) {
+                                                $pres_src = $partido['presidente_foto'];
+                                            }
+                                        }
+                                    ?>
+                                    <?php if (!empty($pres_src)): ?>
+                                    <img src="<?php echo htmlspecialchars($pres_src); ?>" 
                                          alt="<?php echo htmlspecialchars($partido['presidente']); ?>" 
                                          class="candidato-foto mb-2"
                                          onerror="this.onerror=null; this.src='assets/img/candidatos/placeholder.svg';">
@@ -407,6 +426,23 @@ if ($is_production) {
                         </div>
                     </div>
                     <?php endforeach; ?>
+                    
+                    <!-- Opción de Voto en Blanco -->
+                    <div class="col-12 mb-4">
+                        <div class="partido-card" id="voto-blanco" data-tipo="BLANCO" onclick="seleccionarVotoBlanco()">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <i class="fas fa-file fa-4x text-secondary"></i>
+                                </div>
+                                <h4 class="text-dark">VOTO EN BLANCO</h4>
+                                <p class="text-muted">No deseo votar por ningún partido político. Mi voto no contará para ningún candidato.</p>
+                                
+                                <button type="button" class="btn btn-confirmar-partido" onclick="event.stopPropagation(); confirmarVotoBlanco()">
+                                    <i class="fas fa-check-double me-2"></i>CONFIRMAR VOTO EN BLANCO
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="alert alert-info text-center" id="mensajeSeleccion" style="display: none;">
@@ -481,18 +517,21 @@ if ($is_production) {
             document.getElementById('tiempo_votacion').value = Math.floor((Date.now() - tiempoInicio) / 1000);
         }, 1000);
 
-        function seleccionarPartido(partidoId, siglas) {
+        function seleccionarPartido(partidoId, siglas, element) {
             // Remover selección anterior
             document.querySelectorAll('.partido-card').forEach(card => {
                 card.classList.remove('selected');
             });
             
             // Agregar selección a la tarjeta clickeada
-            event.currentTarget.classList.add('selected');
+            if (element) {
+                element.classList.add('selected');
+            }
             
             // Actualizar variables
             partidoSeleccionadoId = partidoId;
             document.getElementById('partido_id').value = partidoId;
+            document.getElementById('tipo_voto').value = 'VALIDO';
             
             // Mostrar mensaje de selección
             document.getElementById('mensajeSeleccion').style.display = 'block';
@@ -501,14 +540,66 @@ if ($is_production) {
             // Habilitar botón de confirmación general
             document.getElementById('btnConfirmar').disabled = false;
         }
+        
+        function seleccionarVotoBlanco() {
+            // Remover selección anterior
+            document.querySelectorAll('.partido-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Seleccionar voto en blanco
+            const votoBlanco = document.getElementById('voto-blanco');
+            if (votoBlanco) {
+                votoBlanco.classList.add('selected');
+            }
+            
+            // Actualizar variables
+            partidoSeleccionadoId = null;
+            document.getElementById('partido_id').value = '';
+            document.getElementById('tipo_voto').value = 'BLANCO';
+            
+            // Mostrar mensaje de selección
+            document.getElementById('mensajeSeleccion').style.display = 'block';
+            document.getElementById('partidoSeleccionado').textContent = 'Voto en Blanco';
+            
+            // Habilitar botón de confirmación general
+            document.getElementById('btnConfirmar').disabled = false;
+        }
+        
+        function confirmarVotoBlanco() {
+            // Remover selección anterior
+            document.querySelectorAll('.partido-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Seleccionar voto en blanco
+            const votoBlanco = document.getElementById('voto-blanco');
+            if (votoBlanco) {
+                votoBlanco.classList.add('selected');
+            }
+            
+            // Actualizar variables
+            partidoSeleccionadoId = null;
+            document.getElementById('partido_id').value = '';
+            document.getElementById('tipo_voto').value = 'BLANCO';
+            
+            // Guardar el nombre para el modal
+            partidoConfirmarTexto = 'VOTO EN BLANCO';
+            origenConfirmacion = 'tarjeta';
+            
+            // Mostrar modal de confirmación
+            const modalConfirmacion = new bootstrap.Modal(document.getElementById('modalConfirmacion'));
+            document.getElementById('partidoConfirmar').textContent = partidoConfirmarTexto;
+            modalConfirmacion.show();
+        }
 
         function confirmarVotoPartido(partidoId, siglas) {
             // Asegurarse de que el partido esté seleccionado
             if (partidoSeleccionadoId !== partidoId) {
                 // Si no está seleccionado, seleccionarlo primero
-                const card = event.target.closest('.partido-card');
+                const card = document.querySelector('[onclick*="seleccionarPartido(' + partidoId + ',"]');
                 if (card) {
-                    seleccionarPartido(partidoId, siglas);
+                    seleccionarPartido(partidoId, siglas, card);
                 }
             }
             
@@ -548,30 +639,34 @@ if ($is_production) {
 
         // Validar antes de enviar (para el botón general de abajo)
         document.getElementById('formVotacion').addEventListener('submit', function(e) {
-            if (!partidoSeleccionadoId) {
+            // Allow BLANCO votes even when no partidoSeleccionadoId is set
+            const tipoInput = document.getElementById('tipo_voto');
+            const tipoActual = tipoInput ? tipoInput.value : 'VALIDO';
+
+            if (tipoActual !== 'BLANCO' && !partidoSeleccionadoId) {
                 e.preventDefault();
                 alert('⚠️ Por favor selecciona un candidato antes de confirmar');
                 return false;
             }
-            
+
             // Si ya se envió con el modal, permitir el envío
             if (votoEnviado) {
                 return true;
             }
-            
+
             // Prevenir envío y mostrar modal
             e.preventDefault();
-            
-            // Obtener el nombre del partido seleccionado
-            const mensajeSeleccion = document.getElementById('partidoSeleccionado').textContent;
+
+            // Obtener el nombre del partido seleccionado o tipo
+            const mensajeSeleccion = document.getElementById('partidoSeleccionado').textContent || (tipoActual === 'BLANCO' ? 'VOTO EN BLANCO' : '');
             partidoConfirmarTexto = mensajeSeleccion;
             origenConfirmacion = 'general';
-            
+
             // Mostrar modal de confirmación
             document.getElementById('partidoConfirmar').textContent = mensajeSeleccion;
             const modal = new bootstrap.Modal(document.getElementById('modalConfirmacion'));
             modal.show();
-            
+
             return false;
         });
 
