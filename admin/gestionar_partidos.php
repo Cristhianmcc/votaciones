@@ -2,6 +2,7 @@
 /**
  * SISTEMA ELECTORAL PERÚ 2026
  * Gestión de Partidos Políticos - Panel Administrativo
+ * Última actualización: 2025-12-04
  */
 
 session_start();
