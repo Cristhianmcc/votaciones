@@ -354,16 +354,11 @@ if ($is_production) {
                         <div class="partido-card" onclick="seleccionarPartido(<?php echo $partido['partido_id']; ?>, '<?php echo htmlspecialchars($partido['siglas']); ?>', this)">>
                             <div class="text-center">
                                 <?php
-                                    $logo_src = 'assets/img/partidos/placeholder.svg';
-                                    if (!empty($partido['logo_url'])) {
-                                        $candidate_path = __DIR__ . '/' . $partido['logo_url'];
-                                        if (file_exists($candidate_path)) {
-                                            $logo_src = $partido['logo_url'];
-                                        }
-                                    }
+                                    // Mostrar logo sin validar file_exists (para Cloudinary)
+                                    $logo_src = !empty($partido['logo_url']) ? $partido['logo_url'] : 'assets/img/partidos/placeholder.svg';
                                 ?>
                                 <img src="<?php echo htmlspecialchars($logo_src); ?>" 
-                                     alt="<?php echo htmlspecialchars($partido['nombre_corto']); ?>" 
+                                     alt="<?php echo htmlspecialchars($partido['nombre_corto'] ?? $partido['siglas']); ?>" 
                                      class="partido-logo"
                                      onerror="this.onerror=null; this.src='assets/img/partidos/placeholder.svg';">
                                 
@@ -378,23 +373,16 @@ if ($is_production) {
 
                                 <div class="candidato-info mt-3">
                                     <?php
-                                        $pres_src = '';
-                                        if (!empty($partido['presidente_foto'])) {
-                                            $pres_path = __DIR__ . '/' . $partido['presidente_foto'];
-                                            if (file_exists($pres_path)) {
-                                                $pres_src = $partido['presidente_foto'];
-                                            }
-                                        }
+                                        // Mostrar foto del presidente sin validar file_exists (para Cloudinary)
+                                        $pres_src = !empty($partido['presidente_foto']) ? $partido['presidente_foto'] : 'assets/img/candidatos/placeholder.svg';
                                     ?>
-                                    <?php if (!empty($pres_src)): ?>
                                     <img src="<?php echo htmlspecialchars($pres_src); ?>" 
-                                         alt="<?php echo htmlspecialchars($partido['presidente']); ?>" 
+                                         alt="<?php echo htmlspecialchars($partido['presidente'] ?? 'Presidente'); ?>" 
                                          class="candidato-foto mb-2"
                                          onerror="this.onerror=null; this.src='assets/img/candidatos/placeholder.svg';">
-                                    <?php endif; ?>
                                     
                                     <div class="candidato-nombre">
-                                        <?php echo htmlspecialchars($partido['presidente']); ?>
+                                        <?php echo htmlspecialchars($partido['presidente'] ?? 'Sin candidato'); ?>
                                     </div>
                                     
                                     <div class="text-muted" style="font-size: 12px;">
