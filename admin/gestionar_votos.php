@@ -57,7 +57,7 @@ if ($is_production) {
               FROM tbl_voto v
               INNER JOIN tbl_ciudadano c ON v.ciudadano_id = c.id
               LEFT JOIN tbl_partido p ON v.partido_id = p.id
-              LEFT JOIN tbl_candidato cand ON p.id = cand.partido_id AND cand.cargo = 'PRESIDENTE'
+              LEFT JOIN tbl_candidato cand ON p.id = cand.partido_id AND cand.tipo_candidato = 'PRESIDENTE'
               $where_sql
               ORDER BY v.fecha_hora DESC
               LIMIT $por_pagina OFFSET $offset";
